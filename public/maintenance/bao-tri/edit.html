@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa bảo trì</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn-primary {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chỉnh sửa bảo trì</h5>
+                <a href="/maintenance/bao-tri" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+            <div class="card-body">
+                <form id="editBaoTriForm">
+                    <div class="mb-3">
+                        <label for="ma_bao_tri" class="form-label">Mã bảo trì</label>
+                        <input type="text" class="form-control" id="ma_bao_tri" name="ma_bao_tri" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ten_bao_tri" class="form-label">Tên bảo trì</label>
+                        <input type="text" class="form-control" id="ten_bao_tri" name="ten_bao_tri" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mo_ta" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="mo_ta" name="mo_ta" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trang_thai" class="form-label">Trạng thái</label>
+                        <select class="form-select" id="trang_thai" name="trang_thai">
+                            <option value="Chờ xử lý">Chờ xử lý</option>
+                            <option value="Đang thực hiện">Đang thực hiện</option>
+                            <option value="Hoàn thành">Hoàn thành</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ngay_bat_dau" class="form-label">Ngày bắt đầu</label>
+                        <input type="datetime-local" class="form-control" id="ngay_bat_dau" name="ngay_bat_dau" required>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Lưu thay đổi
+                        </button>
+                        <button type="button" class="btn btn-danger" id="deleteBtn">
+                            <i class="bi bi-trash"></i> Xóa bảo trì
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lấy ID từ URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+
+        // Lấy thông tin bảo trì
+        async function getBaoTri() {
+            try {
+                const response = await fetch(`/maintenance/bao-tri/${id}`);
+                const data = await response.json();
+                if (data.success) {
+                    const baoTri = data.data;
+                    document.getElementById('ma_bao_tri').value = baoTri.ma_bao_tri;
+                    document.getElementById('ten_bao_tri').value = baoTri.ten_bao_tri;
+                    document.getElementById('mo_ta').value = baoTri.mo_ta || '';
+                    document.getElementById('trang_thai').value = baoTri.trang_thai || 'Chờ xử lý';
+                    
+                    // Chuyển đổi ngày bắt đầu sang định dạng datetime-local
+                    const ngayBatDau = new Date(baoTri.ngay_bat_dau);
+                    document.getElementById('ngay_bat_dau').value = ngayBatDau.toISOString().slice(0, 16);
+                } else {
+                    alert('Không thể lấy thông tin bảo trì: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi lấy thông tin bảo trì');
+            }
+        }
+
+        // Cập nhật bảo trì
+        async function updateBaoTri(formData) {
+            try {
+                const response = await fetch(`/maintenance/bao-tri/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Cập nhật bảo trì thành công');
+                    window.location.href = '/maintenance/bao-tri';
+                } else {
+                    alert('Không thể cập nhật bảo trì: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi cập nhật bảo trì');
+            }
+        }
+
+        // Xóa bảo trì
+        async function deleteBaoTri() {
+            if (confirm('Bạn có chắc chắn muốn xóa bảo trì này?')) {
+                try {
+                    const response = await fetch(`/maintenance/bao-tri/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        alert('Xóa bảo trì thành công');
+                        window.location.href = '/maintenance/bao-tri';
+                    } else {
+                        alert('Không thể xóa bảo trì: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xóa bảo trì');
+                }
+            }
+        }
+
+        // Xử lý sự kiện submit form
+        document.getElementById('editBaoTriForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = {
+                ma_bao_tri: document.getElementById('ma_bao_tri').value,
+                ten_bao_tri: document.getElementById('ten_bao_tri').value,
+                mo_ta: document.getElementById('mo_ta').value,
+                trang_thai: document.getElementById('trang_thai').value,
+                ngay_bat_dau: document.getElementById('ngay_bat_dau').value
+            };
+            updateBaoTri(formData);
+        });
+
+        // Xử lý sự kiện click nút xóa
+        document.getElementById('deleteBtn').addEventListener('click', deleteBaoTri);
+
+        // Lấy thông tin bảo trì khi trang được tải
+        getBaoTri();
+    </script>
+</body>
+</html> 
